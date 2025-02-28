@@ -48,7 +48,7 @@ class CommentViewSet(viewsets.ModelViewSet):
         if not self.request.user.is_authenticated:
             self.permission_denied(
                 self.request,
-                message='Учетные данные для аутентификации не были предоставлены.'
+                message='Учетные данные не предоставлены.'
             )
         return Comment.objects.filter(post_id=post_id)
 
