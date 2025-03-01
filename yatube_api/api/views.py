@@ -1,9 +1,8 @@
-from rest_framework import viewsets, permissions
-from rest_framework.exceptions import PermissionDenied
+from rest_framework import viewsets
 
 from posts.models import Post, Comment, Group
 from .serializers import PostSerializer, GroupSerializer, CommentSerializer
-
+from .permissions import IsOwnerOrReadOnly
 
 class PostViewSet(viewsets.ModelViewSet):
     """
@@ -12,28 +11,16 @@ class PostViewSet(viewsets.ModelViewSet):
     """
     queryset = Post.objects.all()
     serializer_class = PostSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsOwnerOrReadOnly]
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
-
-    def perform_update(self, serializer):
-        if serializer.instance.author != self.request.user:
-            raise PermissionDenied('Изменение чужого контента запрещено!')
-        serializer.save()
-
-    def perform_destroy(self, instance):
-        if instance.author != self.request.user:
-            raise PermissionDenied('Удаление чужого контента запрещено!')
-        instance.delete()
-
 
 class GroupViewSet(viewsets.ReadOnlyModelViewSet):
     """Набор представлений для просмотра экземпляров групп."""
     queryset = Group.objects.all()
     serializer_class = GroupSerializer
-    permission_classes = [permissions.IsAuthenticated]
-
+    permission_classes = [IsOwnerOrReadOnly]
 
 class CommentViewSet(viewsets.ModelViewSet):
     """
@@ -41,29 +28,14 @@ class CommentViewSet(viewsets.ModelViewSet):
     редактирования экземпляров комментариев.
     """
     serializer_class = CommentSerializer
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    permission_classes = [IsOwnerOrReadOnly]
 
     def get_queryset(self):
         post_id = self.kwargs['post_id']
-        if not self.request.user.is_authenticated:
-            self.permission_denied(
-                self.request,
-                message='Учетные данные не предоставлены.'
-            )
-        return Comment.objects.filter(post_id=post_id)
+        post = Post.objects.get(id=post_id)
+        return post.comments.all()
 
     def perform_create(self, serializer):
-        serializer.save(
-            author=self.request.user,
-            post_id=self.kwargs['post_id']
-        )
-
-    def perform_update(self, serializer):
-        if serializer.instance.author != self.request.user:
-            raise PermissionDenied('Изменение чужого контента запрещено!')
-        serializer.save()
-
-    def perform_destroy(self, instance):
-        if instance.author != self.request.user:
-            raise PermissionDenied('Удаление чужого контента запрещено!')
-        instance.delete()
+        post_id = self.kwargs['post_id']
+        post = Post.objects.get(id=post_id)
+        serializer.save(author=self.request.user, post=post)
