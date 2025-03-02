@@ -1,8 +1,9 @@
 from rest_framework import viewsets
 
-from posts.models import Post, Comment, Group
+from posts.models import Post, Group
 from .serializers import PostSerializer, GroupSerializer, CommentSerializer
 from .permissions import IsOwnerOrReadOnly
+
 
 class PostViewSet(viewsets.ModelViewSet):
     """
@@ -16,11 +17,13 @@ class PostViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
 
+
 class GroupViewSet(viewsets.ReadOnlyModelViewSet):
     """Набор представлений для просмотра экземпляров групп."""
     queryset = Group.objects.all()
     serializer_class = GroupSerializer
     permission_classes = [IsOwnerOrReadOnly]
+
 
 class CommentViewSet(viewsets.ModelViewSet):
     """
