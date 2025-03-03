@@ -1,10 +1,10 @@
 from django.contrib.auth import get_user_model
 from django.db import models
 
+from .constants import MAX_TITLE_LENGTH
+
 
 User = get_user_model()
-
-MAX_TITLE_LENGTH = 200
 
 
 class Group(models.Model):
